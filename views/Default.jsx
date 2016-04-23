@@ -17,10 +17,17 @@ var Default = React.createClass({
 
       </head>
       <body style={{fontFamily: ['Varela Round', 'sans-serif']}}>
+        <div id="map" style={{width: 600px; height: 400px}}></div>
+
+        <script src="sample-geojson.js" type="text/javascript"></script>
+        <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+
         <div id="app"></div>
         <script src="js/bundle.js"></script>
       </body>
       </html>
+
+
     );
   }
 });

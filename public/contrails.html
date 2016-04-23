@@ -1,0 +1,201 @@
+
+<html lang="en">
+<head>
+    <title>Contrail Science Flight Map</title>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script type="text/javascript">
+//<![CDATA[
+try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:0,byc:0,owlid:"cf",bag2:1,mirage2:0,oracle:0,paths:{cloudflare:"/cdn-cgi/nexp/dok3v=1613a3a185/"},atok:"121a4bfcc32d87d250b08b9802d9bc0d",petok:"da31152481e9d095ca34ec7fceb80b46029cbfce-1461418957-1800",zone:"contrailscience.com",rocket:"0",apps:{"clky":{"sid":"66565810","uid":"0"}},sha2test:0}];!function(a,b){a=document.createElement("script"),b=document.getElementsByTagName("script")[0],a.async=!0,a.src="//ajax.cloudflare.com/cdn-cgi/nexp/dok3v=e982913d31/cloudflare.min.js",b.parentNode.insertBefore(a,b)}()}}catch(e){};
+//]]>
+</script>
+<style>
+
+        body {
+            color: #808080;
+            font-family: monospace;
+            font-size: 13px;
+            text-align: left;
+
+            background-color: #000;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #info {
+            position: absolute;
+            top: 1;
+            /*width: 200;*/
+            padding: 5px;
+            z-index: 100;
+            opacity: 0.4;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+
+        }
+
+        #info-nowebgl {
+            position: center;
+            top: 1;
+            /*width: 200;*/
+            font-size: 30px;
+            padding: 5px;
+            z-index: 100;
+            opacity: 1.0;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            display:none;
+        }
+
+
+        #time {
+            position: absolute;
+            bottom: 10;
+            /*width: 200;*/
+            padding: 5px;
+            z-index: 100;
+            font-family: monospace;
+            font-size: 30px;
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+        }
+
+        #loading-screen {
+            position: absolute;
+            color: #80C080;
+              width: 80% ;
+              margin-left: auto ;
+              margin-right: auto ;
+            top: 100;
+            /*width: 200;*/
+            padding: 5px;
+            z-index: 100;
+        }
+
+
+        a {
+
+            /*color: #ff80ff;*/
+        }
+
+        b {
+            /*color: lightgreen*/
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<div id="info-nowebgl">
+<center>
+SORRY<br> THIS BROWSER<br> DOES NOT SUPPORT<br>
+WebGL<br><br>
+<a href="http://get.webgl.org/">Get WebGL</a>
+<br><br>
+<a href="http://contrailscience.com" target="_blank" style="font-size: 40px;">Contrail Science</a>
+</center>
+</div>
+
+<div id="info"><a href="http://contrailscience.com" target="_blank" style="font-size: 20px;">Contrail Science</a>
+<br>
+    <b>H</b> = Hide Controls <br>
+    <b>F</b> = Full Screen <br>
+    <!--<b>I</b> Info-->
+</div>
+
+<img id="preview" src ="/img/preview-20121024-091851.jpg" />
+
+<div id = "loading-screen">
+<center>
+<h1>
+
+<center>
+LOADING
+<br>
+<li>
+<ul>Loading might take some time</ul>
+<ul>As we need to load 24 hours of flights</ul>
+<ul>That's 75MB of data. Give it a minute</ul>
+
+</li>
+</h1>
+</div>
+
+<div id = "time">
+00:00 AM
+</div>
+
+<!--<script src="three.min.js"></script>-->
+<script src="js/three.js"></script>
+<script src="js/stats.min.js"></script>
+<script src="js/dat.gui.min.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="js/jdataview.js"></script>
+<script type="text/javascript" src="js/gl-matrix.js"></script>
+<script src="http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js"></script>
+
+
+<script id="shader-fs-anim" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 uVertexColor; // set globally
+    uniform float startTime;   // start end end time for how much of the track to display
+    uniform float endTime;
+
+    varying float pixelTime;
+
+    void main(void) {
+        gl_FragColor = uVertexColor;
+        if (pixelTime > startTime && pixelTime < endTime) {
+          float r = (pixelTime-startTime)/(endTime-startTime);
+          float c = 1.0*r*r*r;
+          if (c<0.05) c=0.05;
+          gl_FragColor.w = c;
+        }
+        else
+        {
+          gl_FragColor.w = 0.00;
+        }
+    }
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 uVertexColor; // set globally
+    uniform float startTime;   // start end end time for how much of the track to display
+    uniform float endTime;
+
+    varying float pixelTime;
+
+    void main(void) {
+        gl_FragColor = uVertexColor;
+    }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    // attribute vec3 aVertexPosition;
+    attribute vec4  aVertexPosition; // x,y are lon, lat, z=alt, w=time
+  //  attribute float time;
+
+    varying float pixelTime;
+
+// Interesting mercator link: http://msdn.microsoft.com/en-us/library/bb259689.aspx
+
+// mercator projection
+//    float y = aVertexPosition.y;
+//    float ya = y*3.141592/180.0;  // y in radians
+//    float yb = 90.0  * log(tan(3.141592/4.0 + (ya/2.0)));
+
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+//        gl_Position = uPMatrix * vec4(aVertexPosition.x, yb, -aVertexPosition.z, 1.0);  // Mercator
+        gl_Position = uPMatrix * vec4(aVertexPosition.x, aVertexPosition.y, -aVertexPosition.z, 1.0); // Equirectangular
+        pixelTime = aVertexPosition.w;
+    }
+</script>
+
+<script src="js/3lines.js?1461418957"></script>
+
+</body>
+</html>
